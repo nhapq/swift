@@ -1,0 +1,52 @@
+# -*- coding: utf-8 -*-
+
+from flask import Flask, request, abort, Blueprint, jsonify, abort
+import os
+import time
+from extensions import mdb
+
+## SOPCAST CHECK STATUS ##
+sopcast = Blueprint('sop', __name__, url_prefix='/sopcast')
+@sopcast.route('/check', methods=['GET'])
+def add_record():
+    if not request.args.get('link') :
+        abort(400)
+    link       = str(request.args.get('link'))
+    PORT       = 9000
+    while os.system("/usr/sbin/lsof -i tcp:%s " %PORT).read() != "":
+        PORT = PORT + 1
+    PORT = str(PORT)
+
+    os.system("/webapps/api/bin/sp-sc-auth %s 3900 %s > /dev/null &" %(link,PORT))
+    time.sleep(20)
+
+    os.popen("/usr/bin/wget http://127.0.0.1:%s -O %s &" %(PORT,PORT))
+    time.sleep(10)
+    os.system("/usr/sbin/lsof -i tcp:%s | awk 'NR!=1 {print $2}'| xargs kill -9" %PORT)
+    infor = os.popen("/usr/bin/mediainfo %s " %PORT).read()
+    mdb.Sopcast().update_mediainfor(link,infor)
+    if "Video" in infor:
+        status = 1
+    else:
+        status = 0
+    mdb.Sopcast().update_status(link,status)
+
+    os.system("/bin/rm -f  %s" %PORT)
+    return "done"
+
+
+@sopcast.route('/stop', methods=['GET'])
+def stop_record():
+    link  =  str(request.args.get('link'))
+    PORT  =  5000 + int(request.args.get('channel_id')
+    os.system("/usr/sbin/lsof -i tcp:%s | awk 'NR!=1 {print $2}'| xargs kill -9" %PORT)
+    output = os.popen('/bin/ps aux | grep %s | grep -v %s' %(link,link)).read
+    if not output:
+         return "success"
+    return "stop fail"
+
+
+@sopcast.route('/startall', methods=['GET'])
+def start_all():
+    os.system("/opt/mount/sopcast/checksopcast.sh /opt/mount/channel")
+    

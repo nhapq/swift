@@ -1,0 +1,45 @@
+from mongokit import ObjectId, Document
+from extensions import mdb
+from datetime import datetime
+
+
+class SopCast(Document):
+    __collection__ = 'sopcast'
+    structure = {
+        "status" : int,
+        "information" : {
+                        "source": basestring,
+                        "author": basestring
+        },
+        "channel" : basestring,
+        "link" : basestring,
+        "uptime" : int,
+        "profile": basestring,
+        "streams" : {
+                "adaptive" : {
+                        "hds" : basestring,
+                        "hls" : basestring
+                },
+                "bitrate_1000" : {
+                        "hls" : basestring,
+                        "rtmp" : basestring
+                },
+                "bitrate_2500" : {
+                        "hls" : basestring,
+                        "rtmp" : basestring
+                }
+        },
+    }
+#    required_fields = ['link', 'channel']
+    default_values = {
+        'uptime': 0,
+        'status': 0
+    }
+
+    def update_mediainfor(self, link, infor):
+        return mdb.sopcast.update({"link" : link}, { "$set": {"mediainfor" : infor} }, multi = True)
+
+    def update_status(self, link, status):
+        if status == 1:
+            return mdb.sopcast.update({"link" : link}, { "$set": {"status" : 1}, "$inc": { "uptime": 1 } }, multi = True) 
+        return mdb.sopcast.update({"link" : link}, { "$set": {"status" : 0}}, multi = True) 
