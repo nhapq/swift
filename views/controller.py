@@ -20,7 +20,7 @@ def get_file(object):
         object_name = str(request.path).replace('/get_file/','')
     request_url =  'http://10.20.10.19/v1/AUTH_admin/rad_file/' + object_name
     ##manipulate a download-request to the swift proxy
-    p = subprocess.Popen(['curl', '--silent', '-k', '-v','-H', 'X-Auth-Token: AUTH_tkd9290c53a5d4462e808d3b397260f779', request_url, '-X', 'GET'],stdout=subprocess.PIPE, preexec_fn=os.setsid)
+    p = subprocess.Popen(['curl', '--silent', '-k', '-v', request_url, '-X', 'GET'],stdout=subprocess.PIPE, preexec_fn=os.setsid)
     def retry(max_retry=5):
         retry_count = 0
         result = None
